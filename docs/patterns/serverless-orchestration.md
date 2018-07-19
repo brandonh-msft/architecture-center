@@ -4,7 +4,7 @@ Implementing workflow orchestration in a serverless environment offers massive s
 ## Context & Problem
 Backend business processes often involve a multi-step "orchestration" of various sub-processes. As an example, a business may want to ingest many files, ensure they compose a proper batch, validate their structure and content, then pass them on to downstream systems.
 
-In a traditional implemention, that ingestion and validation may take place wholly within a VM or a set of VMs. This presents us with the following considerations:
+In a traditional implementation, that ingestion and validation may take place wholly within a VM or a set of VMs. This presents us with the following considerations:
 * How much idle time are you paying for?
 * What is the cost to scale out/in to support varying degrees of load?
 * How much could any one sub-process be potentially parallelized?
