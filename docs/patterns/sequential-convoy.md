@@ -19,7 +19,7 @@ Let's suppose you're working with an order-tracking system which receives a ledg
 
 ## Solution
 
-By pushing related messages into categories within the queuing system, and forcing listeners on the queue to lock & pull only from one category, one message at a time, we can achieve this goal even in a distributed system.
+By pushing related messages into categories within the queuing system and forcing listeners on the queue to lock & pull only from one category, one message at a time, we can achieve this goal even in a distributed system.
 
 For the above scenario the approach, using Sequential Convoy, would be to process each ledger message one-at-a-time in the order in which it is received by sending each transaction within it to another queue where category = Order ID. Then, consumers could process each category in parallel (as a transaction would never span multiple orders), but first-in-first-out within the category (i.e. one transaction at a time).
 
@@ -53,7 +53,7 @@ Here's what the general Sequential Convoy pattern looks like:
 Where, in the queue, messages are received and delivered in a manner similar to this:
 ![](_images/sequential-convoy-queuemessages.png)
 
-Now, for our example we have 2 queues which utilize FIFO, but we "fan out" by debatching the content of each message in our first queue, so while the queue behaviors are similar to above, there is a slight difference:
+Now, for our example we have 2 queues which utilize FIFO, but we "fan out" by de-batching the content of each message in our first queue, so while the queue behaviors are similar to above, there is a slight difference:
 ![](_images/sequential-convoy-examplearch.png)
 
 Our ledger processor takes care:
@@ -65,7 +65,7 @@ Then, our consumers are listening to the secondary queue where they:
 1. Peek-lock any time a new Session is found, locking the session from being picked up by other consumers
 2. Process all messages with matching Session IDs in order from the queue
 
-Here, when considering scalability, our ledger queue is a primary bottleneck as we cannot fan out since many ledgers could reference the same Order IDs (e.g. update a previously-created order) as transactions are performed and ledgers are submitted throughout the day. However, once we are able to fan out *after* the ledger to N number of orders in our serverless environment.
+Here, when considering scalability, our ledger queue is a primary bottleneck as we cannot fan out since many ledgers could reference the same Order IDs (e.g. update a previously created order) as transactions are performed and ledgers are submitted throughout the day. However, we are able to fan out *after* the ledger to N number of orders in our serverless environment.
 
 ## Next steps
 
