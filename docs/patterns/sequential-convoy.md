@@ -27,10 +27,10 @@ For the above scenario the approach, using Sequential Convoy, would be to proces
 
 Consider the following points when deciding how to implement this pattern:
 
-- Category/Scale unit - what property, if any, of your incoming messages *can* you scale out on?
-- Throughput - what is your target message throughput? If it is very high, you may need to reconsider your FIFO requirements.
+- Category/Scale unit - what property, if any, of your incoming messages *can* you scale out on? In the example below, this property is the Order ID.
+- Throughput - what is your target message throughput? If it is very high (exceeds the # of executions/sec of the Logic App Service Bus connector, etc), you may need to reconsider your FIFO requirements (can you enforce a start/end message, sort by time, then send a batch off for processing?).
 - Service capabilities - do provided services offer the level of control to allow for one-at-a-time processing of messages within a queue or category of a queue?
-- Future scale - what will the process of adding a new category of message to the system look like?
+- Future scale - what will the process of adding a new category of message to the system look like? In our example the ledger & transactions would be specific to, say, one customer. What would onboarding a new customer mean for the solution? Do you have data-sovereignty requirements that necessitate replicating this per-customer, or could you simply have a set of Ledger Processors which lock the Ledger Queue per Customer ID in the same way the Order Processors do?
 
 ## When to use this pattern
 
@@ -56,16 +56,16 @@ Where, in the queue, messages are received and delivered in a manner similar to 
 Now, for our example we have 2 queues which utilize FIFO, but we "fan out" by de-batching the content of each message in our first queue, so while the queue behaviors are similar to above, there is a slight difference:
 ![](_images/sequential-convoy-examplearch.png)
 
-Our ledger processor takes care:
+Our ledger processor takes care of:
 1. Walking the ledger one transaction at a time
 2. Setting - in the case of Service Bus - the Session ID of the message to match the Order ID
-3. Sending each transaction on to a secondary queue with the Session ID set to the Order ID
+3. Sending each ledger transaction on to a secondary queue with the Session ID set to the Order ID
 
 Then, our consumers are listening to the secondary queue where they:  
-1. Peek-lock any time a new Session is found, locking the session from being picked up by other consumers
-2. Process all messages with matching Session IDs in order from the queue
+1. Peek-lock any time a new Order is found, locking the Order from being picked up by other consumers
+2. Process all messages with matching Order IDs *in order* from the queue
 
-Here, when considering scalability, our ledger queue is a primary bottleneck as we cannot fan out since many ledgers could reference the same Order IDs (e.g. update a previously created order) as transactions are performed and ledgers are submitted throughout the day. However, we are able to fan out *after* the ledger to N number of orders in our serverless environment.
+Here, when considering scalability, our ledger queue is a primary bottleneck as we cannot fan out since different transactions posted to the ledger could reference the same Order ID (e.g. update a previously created order) as transactions are performed and submitted throughout the day. However, we are able to fan out *after* the ledger to N number of orders in our serverless environment.
 
 ## Next steps
 
