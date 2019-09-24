@@ -19,7 +19,7 @@ Let's suppose you're working with an order-tracking system which receives a ledg
 
 ## Solution
 
-By pushing related messages in to categories within the queuing system, and forcing listeners on the queue to lock & pull only from one category, one message at a time, we can achieve this goal even in a distributed system.
+By pushing related messages into categories within the queuing system, and forcing listeners on the queue to lock & pull only from one category, one message at a time, we can achieve this goal even in a distributed system.
 
 For the above scenario the approach, using Sequential Convoy, would be to process each ledger message one-at-a-time in the order in which it is received by sending each transaction within it to another queue where category = Order ID. Then, consumers could process each category in parallel (as a transaction would never span multiple orders), but first-in-first-out within the category (i.e. one transaction at a time).
 
